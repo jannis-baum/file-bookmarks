@@ -13,7 +13,7 @@ class FBMNode:
         return f'\n{" " * self.depth}├── '.join([f'{"." * self.depth}{os.path.basename(self.directory)}/'] + self.fbms[:-1]) \
              + f'\n{" " * self.depth}└── ' + self.fbms[-1]
 
-class FBMList:
+class FBMManager:
     DIR_NAME = '.fbms'
     ID_URL = 'url'
     ID_COPYTEXT = 'copy-text'
@@ -24,12 +24,12 @@ class FBMList:
 
     def build_list(self, path, depth):
         if path == '/Users': return
-        fbms_dir = os.path.join(path, FBMList.DIR_NAME)
+        fbms_dir = os.path.join(path, FBMManager.DIR_NAME)
         if os.path.isdir(fbms_dir):
             self.nodes.append(FBMNode(depth, path, os.listdir(fbms_dir)))
         self.build_list(os.path.dirname(path), depth + 1)
 
-    def print(self):
+    def print_list(self):
         print('\n\n'.join([fbm.string() for fbm in self.nodes]))
 
     def open_match(self, pattern):
@@ -44,31 +44,34 @@ class FBMList:
             for node in nodes:
                 for fbm in node.fbms:
                     if re.match(pattern, fbm):
-                        with open(os.path.join(node.directory, FBMList.DIR_NAME, fbm)) as data_yaml:
-                            data = yaml.safe_load(data_yaml.read())
-                            if data[FBMList.ID_COPYTEXT]:
-                                os.system(f'printf \%s "{data[FBMList.ID_COPYTEXT]}" | pbcopy')
-                            os.system('open ' + data[FBMList.ID_URL])
+                        self.open_fbm(node.directory, fbm)
                         return
         print(f'no match found :(')
 
-def new_fbm(path, name, url, copy_text):
-    path = os.path.join(path, FBMList.DIR_NAME)
-    if not os.path.isdir(path):
-        os.mkdir(path)
-    with open(os.path.join(path, name), 'w') as fbm:
-        fbm.write(yaml.dump({
-            FBMList.ID_URL: url,
-            FBMList.ID_COPYTEXT: copy_text
-        }))
+    def open_fbm(directory, name):
+        with open(os.path.join(directory, FBMManager.DIR_NAME, name)) as data_yaml:
+            data = yaml.safe_load(data_yaml.read())
+            if data[FBMManager.ID_COPYTEXT]:
+                os.system(f'printf \%s "{data[FBMManager.ID_COPYTEXT]}" | pbcopy')
+            os.system('open ' + data[FBMManager.ID_URL])
+
+    def create_fbm(directory, name, url, copy_text):
+        path = os.path.join(directory, FBMManager.DIR_NAME)
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        with open(os.path.join(path, name), 'w') as fbm:
+            fbm.write(yaml.dump({
+                FBMManager.ID_URL: url,
+                FBMManager.ID_COPYTEXT: copy_text
+            }))
 
 def main(args):
-    fbms = FBMList()
+    fbms = FBMManager()
     if args.name:
         fbms.open_match(args.name)
         return
     if args.list:
-        fbms.print()
+        fbms.print_list()
         return
 
 if __name__ == '__main__':
@@ -77,9 +80,9 @@ if __name__ == '__main__':
     mode.add_argument('name', nargs='?', default=None)
     mode.add_argument('-l', '--list', action='store_true', dest='list', help='list fbms in directory tree')
     mode.add_argument('-n', '--new', dest='new', nargs='+', metavar=('name url', 'copy-text'), type=str,
-                      help=f'create new fbm in closest {FBMList.DIR_NAME} directory')
+                      help=f'create new fbm in closest {FBMManager.DIR_NAME} directory')
     mode.add_argument('-ni', '--new-in', dest='new_in', nargs='+', metavar=('directory name url', 'copy-text'), type=str,
-                      help=f'create new fbm in matching {FBMList.DIR_NAME} directory')
+                      help=f'create new fbm in matching {FBMManager.DIR_NAME} directory')
     mode.add_argument('-nh', '--new-here', dest='new_here', nargs='+', metavar=('name url', 'copy-text'), type=str,
                       help=f'create new fbm in current directory')
 
