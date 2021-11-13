@@ -9,7 +9,7 @@ class FBMNode:
     def __init__(self, depth, directory, fbms):
         self.depth = depth
         self.directory = directory
-        self.fbms = fbms
+        self.fbms = [fbm for fbm in fbms if fbm != '.DS_Store']
 
     def string(self):
         return f'\n{" " * self.depth}├── '.join([f'{"." * self.depth}{os.path.basename(self.directory)}/'] + self.fbms[:-1]) \
