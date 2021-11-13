@@ -107,9 +107,10 @@ class FBMManager:
 class Main:
     def __init__(self):
         self.parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
-                                        description='wip: add description')
+                        description='Organizes web bookmarks along your file system. Can open URLs and (optionally)\nplace text into the clipboard, for example passcodes for reocurring meetings')
         mode = self.parser.add_mutually_exclusive_group()
-        mode.add_argument('name', nargs='?', default=None)
+        mode.add_argument('name', nargs='?', default=None,
+                        help='open closest matching fbm')
         mode.add_argument('-l', '--list', action='store_true', dest='list', help='list fbms in directory tree')
         mode.add_argument('-n', '--new', dest='new', nargs='+', metavar=('name url', 'copy-text'), type=str,
                         help=f'create new fbm in closest {FBMManager.DIR_NAME} directory')
