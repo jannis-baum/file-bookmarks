@@ -4,6 +4,7 @@ import os
 import argparse
 import re
 import yaml
+import subprocess
 
 class FBMNode:
     def __init__(self, depth, directory, fbms):
@@ -26,6 +27,8 @@ class NoNodes(FBMError):
 class IncorrectNArgs(FBMError):
     def __init__(self, function, nargs):
         self.message = f'{function} requires {nargs} {"argument" if nargs == 1 else "arguments"}.'
+class GitError(FBMError):
+    message = 'unable to find remote url'
 
 class FBMManager:
     DIR_NAME = '.fbms'
@@ -54,9 +57,9 @@ class FBMManager:
     def __open_fbm(directory, name):
         with open(os.path.join(directory, FBMManager.DIR_NAME, name)) as data_yaml:
             data = yaml.safe_load(data_yaml.read())
-            if data[FBMManager.ID_COPYTEXT]:
-                os.system(f'printf \%s "{data[FBMManager.ID_COPYTEXT]}" | pbcopy')
-            os.system('open ' + data[FBMManager.ID_URL])
+        if data[FBMManager.ID_COPYTEXT]:
+            os.system(f'printf \%s "{data[FBMManager.ID_COPYTEXT]}" | pbcopy')
+        FBMManager.open_url(data[FBMManager.ID_URL])
 
     @staticmethod
     def __create_fbm(directory, name, url, copy_text):
@@ -68,6 +71,10 @@ class FBMManager:
                 FBMManager.ID_URL: url,
                 FBMManager.ID_COPYTEXT: copy_text
             }))
+    
+    @staticmethod
+    def open_url(url):
+        os.system('open ' + url)
 
     def list_to_print(self):
         self.__assert_non_empty()
@@ -112,6 +119,7 @@ class Main:
         mode.add_argument('name', nargs='?', default=None,
                         help='open closest matching fbm')
         mode.add_argument('-l', '--list', action='store_true', dest='list', help='list fbms in directory tree')
+        mode.add_argument('-g', '--git-remote', action='store_true', dest='git', help='open remote url of git repo')
         mode.add_argument('-n', '--new', dest='new', nargs='+', metavar=('name url', 'copy-text'), type=str,
                         help=f'create new fbm in closest {FBMManager.DIR_NAME} directory')
         mode.add_argument('-ni', '--new-in', dest='new_in', nargs='+', metavar=('directory name url', 'copy-text'), type=str,
@@ -130,6 +138,13 @@ class Main:
                 self.fbmm.open_matching_fbm(args.name)
             if args.list:
                 print(self.fbmm.list_to_print())
+            if args.git:
+                try:
+                    url = subprocess.check_output(['git', 'config', '--get', 'remote.origin.url'])
+                    if not url: raise GitError
+                    FBMManager.open_url(url.decode("utf-8"))
+                except subprocess.CalledProcessError:
+                    raise GitError
             if args.new:
                 if len(args.new) == 2:   self.fbmm.new_in_closest_dir(args.new[0], args.new[1], None)
                 elif len(args.new) == 3: self.fbmm.new_in_closest_dir(args.new[0], args.new[1], args.new[2])
