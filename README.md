@@ -18,6 +18,9 @@ Clone this repository and create a shell alias or symbolic link `fbm` to the scr
 - `fbm -l, --list`\
   lists all fbms found in the current directory tree, organized by directories.
 
+- `fbm -g, --git-remote`\
+  opens git remote if cwd has git repository
+
 - `fbm -n, --new NAME URL [COPY-TEXT]`\
   creates a new fbm `NAME` for `URL` that (optionally) places `COPY-TEXT` into the clipboard when opened. The fbm will be created in the closest parent directory (or current working directory) that already has fbms associated with it.
 
@@ -29,3 +32,4 @@ Clone this repository and create a shell alias or symbolic link `fbm` to the scr
 
 - `fbm -rm --remove`\
   work in progress
+
