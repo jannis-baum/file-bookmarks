@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import os
-import argparse
-import re
-import yaml
+import os, sys, argparse
+import re, yaml
 import subprocess
 
 class FBMNode:
@@ -127,6 +125,10 @@ class Main:
         mode.add_argument('-nh', '--new-here', dest='new_here', nargs='+', metavar=('name url', 'copy-text'), type=str,
                         help=f'create new fbm in current directory')
         # wip: delete fbms
+
+        if len(sys.argv)==1:
+            self.parser.print_help(sys.stderr)
+            sys.exit(1)
         
         self.fbmm = FBMManager()
         self.__run()
